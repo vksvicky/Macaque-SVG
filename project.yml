@@ -1,0 +1,72 @@
+name: MacaqueSVG
+options:
+  bundleIdPrefix: com.vivek
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+  usesTabs: false
+  indentWidth: 4
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: "1.0"
+    ARCHS: arm64 x86_64
+  configs:
+    Debug:
+      ENABLE_TESTABILITY: YES
+      ONLY_ACTIVE_ARCH: YES
+    Release:
+      ONLY_ACTIVE_ARCH: NO
+
+targets:
+  MacaqueSVG:
+    type: application
+    platform: macOS
+    dependencies:
+      - sdk: WebKit.framework
+    sources:
+      - path: MacaqueSVG
+        excludes:
+          - "**/.DS_Store"
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vivek.MacaqueSVG
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: MacaqueSVG/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  MacaqueSVGTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: MacaqueSVGTests
+    dependencies:
+      - target: MacaqueSVG
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vivek.MacaqueSVGTests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  MacaqueSVG:
+    build:
+      targets:
+        MacaqueSVG: all
+        MacaqueSVGTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MacaqueSVGTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

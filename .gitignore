@@ -1,0 +1,14 @@
+# Xcode / XcodeGen
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+.swiftpm/
+build/
+
+# macOS
+.DS_Store
+
+# Carthage / CocoaPods (if added later)
+Carthage/Build/
+Pods/
