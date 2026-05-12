@@ -19,6 +19,7 @@ enum SVGHitTester {
         }
 
         for child in group.children.reversed() {
+            guard child.isVisible else { continue }
             let combinedTransform = child.transform.concatenating(parentTransform)
 
             if let childGroup = child as? SVGGroup {
