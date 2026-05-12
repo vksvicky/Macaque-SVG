@@ -78,8 +78,25 @@ final class SVGImage: SVGElement {
     }
 
     /// Bitmap for Canvas drawing (uses warmed file / nested-SVG cache or an inline `data:` image).
+    /// Falls back to loading from disk synchronously if the warm cache was not populated.
     func displayBitmap(assetBaseDirectory: URL?) -> NSImage? {
         if let rasterDisplayImage { return rasterDisplayImage }
-        return decodedDataURIImage()
+        if let dataImage = decodedDataURIImage() { return dataImage }
+        loadRasterSync(assetBaseDirectory: assetBaseDirectory)
+        return rasterDisplayImage
+    }
+
+    /// Synchronous file load fallback when `warmRaster` was not called beforehand.
+    private func loadRasterSync(assetBaseDirectory: URL?) {
+        guard rasterDisplayImage == nil else { return }
+        let trimmed = href.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.lowercased().hasPrefix("data:") else { return }
+        guard let url = SVGHrefParsing.resolvedFileURL(href: trimmed, assetBaseDirectory: assetBaseDirectory) else {
+            return
+        }
+        if url.pathExtension.lowercased() == "svg" {
+            return
+        }
+        rasterDisplayImage = SVGBitmapDecoder.nsImage(contentsOfFileURL: url)
     }
 }

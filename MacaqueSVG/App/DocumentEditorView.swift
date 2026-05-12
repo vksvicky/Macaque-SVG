@@ -10,6 +10,8 @@ struct DocumentEditorView: View {
     @State private var parsedDocument: SVGDocument?
     @State private var parseErrorMessage: String?
     @State private var exportErrorMessage: String?
+    @State private var selectedElement: SVGElement?
+    @State private var useCanvasMode: Bool = false
 
     private var assetDirectory: URL? {
         documentURL?.deletingLastPathComponent()
@@ -31,13 +33,32 @@ struct DocumentEditorView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else if let parsed = parsedDocument {
                 HSplitView {
-                    SVGPreviewView(document: parsed)
-                        .frame(minWidth: 360, minHeight: 400)
+                    SVGPreviewView(
+                        document: parsed,
+                        useBrowserSVGRendering: !useCanvasMode,
+                        selectedElement: $selectedElement
+                    )
+                    .frame(minWidth: 360, minHeight: 400)
 
                     ScrollView {
-                        parsedSummary(parsed)
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 16) {
+                            parsedSummary(parsed)
+                            if useCanvasMode {
+                                Divider()
+                                Label("Edit Mode", systemImage: "pencil.and.outline")
+                                    .font(.headline)
+                                    .foregroundStyle(.blue)
+                                Text("Click elements to select. Drag to pan. Pinch to zoom.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let element = selectedElement {
+                                Divider()
+                                selectedElementInspector(element)
+                            }
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .frame(minWidth: 240, idealWidth: 280, maxWidth: 360)
                     .background(Color(nsColor: .windowBackgroundColor))
@@ -51,9 +72,21 @@ struct DocumentEditorView: View {
         .frame(minWidth: 640, minHeight: 480)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    useCanvasMode.toggle()
+                } label: {
+                    Label(
+                        useCanvasMode ? "Edit Mode" : "Preview Mode",
+                        systemImage: useCanvasMode ? "pencil.and.outline" : "eye"
+                    )
+                }
+                .help(useCanvasMode ? "Switch to Preview (Cmd+E)" : "Switch to Edit (Cmd+E)")
+
                 Menu("Export", systemImage: "square.and.arrow.up") {
                     Button("Flattened SVG…") { exportFlattenedSVG() }
-                    Button("Compressed SVG (.svgz)…") { exportSVGZ(source: document.svgSource, suggestedSuffix: "svgz") }
+                    Button("Compressed SVG (.svgz)…") {
+                        exportSVGZ(source: document.svgSource, suggestedSuffix: "svgz")
+                    }
                     Button("Flattened SVGZ (.svgz)…") { exportFlattenedSVGZ() }
                     Divider()
                     Menu("PDF (raster)") {
@@ -77,6 +110,15 @@ struct DocumentEditorView: View {
         .onChange(of: documentURL?.path ?? "") { _, _ in
             reparse()
         }
+        .focusedValue(\.exportContext, ExportContext(
+            document: document,
+            parsedDocument: parsedDocument,
+            documentURL: documentURL
+        ))
+        .focusedValue(\.canvasActions, CanvasActions(
+            useCanvasMode: $useCanvasMode,
+            selectedElement: $selectedElement
+        ))
         .alert("Export failed", isPresented: Binding(
             get: { exportErrorMessage != nil },
             set: { if !$0 { exportErrorMessage = nil } }
@@ -213,8 +255,84 @@ struct DocumentEditorView: View {
         String(format: "%g", Double(value))
     }
 
+    @ViewBuilder
+    private func selectedElementInspector(_ element: SVGElement) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Selected Element", systemImage: "cursorarrow.click.2")
+                .font(.headline)
+
+            summaryRow("Type", value: elementTypeName(element))
+            if let svgId = element.svgId {
+                summaryRow("ID", value: svgId)
+            }
+            if let svgClass = element.svgClass {
+                summaryRow("Class", value: svgClass)
+            }
+
+            if let rect = element as? SVGRect {
+                Group {
+                    summaryRow("x", value: formatNumber(rect.x))
+                    summaryRow("y", value: formatNumber(rect.y))
+                    summaryRow("width", value: formatNumber(rect.width))
+                    summaryRow("height", value: formatNumber(rect.height))
+                    if let rx = rect.rx { summaryRow("rx", value: formatNumber(rx)) }
+                    if let ry = rect.ry { summaryRow("ry", value: formatNumber(ry)) }
+                }
+            } else if let circle = element as? SVGCircle {
+                summaryRow("cx", value: formatNumber(circle.cx))
+                summaryRow("cy", value: formatNumber(circle.cy))
+                summaryRow("r", value: formatNumber(circle.r))
+            } else if let path = element as? SVGPath {
+                let truncated = path.d.count > 60 ? String(path.d.prefix(60)) + "…" : path.d
+                summaryRow("d", value: truncated)
+            } else if let poly = element as? SVGPolyline {
+                summaryRow("points", value: "\(poly.points.count)")
+            }
+
+            Divider()
+            Text("Style").font(.subheadline).foregroundStyle(.secondary)
+            if let fill = element.style.fill {
+                summaryRow("fill", value: fill)
+            }
+            if let stroke = element.style.stroke {
+                summaryRow("stroke", value: stroke)
+            }
+            if let strokeWidth = element.style.strokeWidth {
+                summaryRow("stroke-width", value: formatNumber(strokeWidth))
+            }
+            if let opacity = element.style.opacity {
+                summaryRow("opacity", value: formatNumber(opacity))
+            }
+
+            if element.transform != .identity {
+                Divider()
+                Text("Transform").font(.subheadline).foregroundStyle(.secondary)
+                let transform = element.transform
+                summaryRow("translate", value: "\(formatNumber(transform.tx)), \(formatNumber(transform.ty))")
+                summaryRow("scale", value: "\(formatNumber(transform.a)), \(formatNumber(transform.d))")
+            }
+        }
+    }
+
+    private func elementTypeName(_ element: SVGElement) -> String {
+        switch element {
+        case is SVGRect: return "rect"
+        case is SVGCircle: return "circle"
+        case is SVGPath: return "path"
+        case is SVGPolygon: return "polygon"
+        case is SVGPolyline: return "polyline"
+        case is SVGImage: return "image"
+        case is SVGTextBlock: return "text"
+        case is SVGTextPath: return "textPath"
+        case is SVGUse: return "use"
+        case is SVGGroup: return "g"
+        default: return "element"
+        }
+    }
+
     @MainActor
     private func reparse() {
+        selectedElement = nil
         do {
             let parsed = try SVGParser().parse(string: document.svgSource, assetBaseDirectory: assetDirectory)
             SVGImageAssetResolver.warmRasterCaches(in: parsed)

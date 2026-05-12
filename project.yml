@@ -1,6 +1,6 @@
 name: MacaqueSVG
 options:
-  bundleIdPrefix: com.vivek
+  bundleIdPrefix: club.cycleruncode.macaque
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -35,10 +35,54 @@ targets:
       - path: Sources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.vivek.MacaqueSVG
+        PRODUCT_BUNDLE_IDENTIFIER: club.cycleruncode.macaque.MacaqueSVG
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: MacaqueSVG/Resources/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    preBuildScripts:
+      - name: "Prepare Version"
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ "${ACTION}" = "indexbuild" ]; then
+            exit 0
+          fi
+          if [ -n "${SRCROOT}" ] && [ -d "${SRCROOT}" ]; then
+            cd "${SRCROOT}"
+          fi
+          VERSION_SCRIPT="${SRCROOT}/scripts/version/manage_version.sh"
+          if [ ! -f "${VERSION_SCRIPT}" ]; then
+            VERSION_SCRIPT="$(pwd)/scripts/version/manage_version.sh"
+          fi
+          if [ -f "${VERSION_SCRIPT}" ]; then
+            [ -n "${SRCROOT}" ] && export SRCROOT
+            bash "${VERSION_SCRIPT}" prepare 2>&1
+          fi
+          mkdir -p "${TARGET_BUILD_DIR}" && touch "${TARGET_BUILD_DIR}/.prebuild_marker"
+    postBuildScripts:
+      - name: "Update Build Counts"
+        basedOnDependencyAnalysis: false
+        script: |
+          set +e
+          if [ "${ACTION}" = "indexbuild" ]; then
+            exit 0
+          fi
+          if [ -n "${SRCROOT}" ] && [ -d "${SRCROOT}" ]; then
+            cd "${SRCROOT}"
+          fi
+          VERSION_SCRIPT="${SRCROOT}/scripts/version/manage_version.sh"
+          if [ ! -f "${VERSION_SCRIPT}" ]; then
+            VERSION_SCRIPT="$(pwd)/scripts/version/manage_version.sh"
+          fi
+          if [ ! -f "${VERSION_SCRIPT}" ]; then
+            echo "❌ ERROR: Version script not found at ${VERSION_SCRIPT}" >&2
+            exit 0
+          fi
+          [ -n "${SRCROOT}" ] && export SRCROOT
+          [ -n "${BUILT_PRODUCTS_DIR}" ] && export BUILT_PRODUCTS_DIR
+          [ -n "${PRODUCT_NAME}" ] && export PRODUCT_NAME
+          [ -n "${TARGET_BUILD_DIR}" ] && export TARGET_BUILD_DIR
+          [ -n "${CONFIGURATION}" ] && export CONFIGURATION
+          bash "${VERSION_SCRIPT}" success 2>&1
 
   MacaqueSVGTests:
     type: bundle.unit-test
@@ -49,7 +93,7 @@ targets:
       - target: MacaqueSVG
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.vivek.MacaqueSVGTests
+        PRODUCT_BUNDLE_IDENTIFIER: club.cycleruncode.macaque.MacaqueSVGTests
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:

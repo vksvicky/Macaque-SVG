@@ -2,6 +2,15 @@ import AppKit
 import SwiftUI
 import WebKit
 
+/// WKWebView subclass that is transparent to the event system.
+/// It renders SVG content but does not intercept any user input,
+/// allowing SwiftUI gestures on parent views to work normally.
+final class RenderOnlyWebView: WKWebView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+}
+
 /// Renders the raw SVG markup through WebKit so layout matches Safari (including `<textPath>`).
 /// External `<image href="…">` references are inlined as data URIs so the sandboxed WebContent
 /// process never needs file system access.
@@ -20,18 +29,19 @@ struct SVGWebKitPreviewRepresentable: NSViewRepresentable {
         Coordinator()
     }
 
-    func makeNSView(context: Context) -> WKWebView {
+    func makeNSView(context: Context) -> RenderOnlyWebView {
         let config = WKWebViewConfiguration()
         let prefs = WKWebpagePreferences()
         prefs.preferredContentMode = .desktop
         config.defaultWebpagePreferences = prefs
-        let webView = WKWebView(frame: .zero, configuration: config)
+        let webView = RenderOnlyWebView(frame: .zero, configuration: config)
         webView.autoresizingMask = [.width, .height]
         webView.setValue(false, forKey: "drawsBackground")
+        webView.allowsMagnification = false
         return webView
     }
 
-    func updateNSView(_ webView: WKWebView, context: Context) {
+    func updateNSView(_ webView: RenderOnlyWebView, context: Context) {
         let isDark = colorScheme == .dark
         let hash = svgSource.hashValue
         let coordinator = context.coordinator

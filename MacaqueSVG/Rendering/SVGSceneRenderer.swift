@@ -106,23 +106,14 @@ enum SVGSceneRenderer {
             if opacity != 1 {
                 context.opacity *= opacity
             }
-            if textBlock.children.isEmpty {
-                context.concatenate(world)
+            context.concatenate(world)
+            let tspans = textBlock.children.compactMap { $0 as? SVGTSpanNode }
+            if tspans.isEmpty {
                 drawPlainTextBlock(textBlock, context: &context)
-                context.concatenate(world.inverted())
             } else {
-                for child in textBlock.children {
-                    draw(
-                        element: child,
-                        idIndex: idIndex,
-                        assetBaseDirectory: assetBaseDirectory,
-                        context: &context,
-                        parentTransform: world,
-                        useDepth: useDepth,
-                        renderDefinitionSubtrees: renderDefinitionSubtrees
-                    )
-                }
+                drawTSpanTextBlock(textBlock, tspans: tspans, context: &context)
             }
+            context.concatenate(world.inverted())
             if opacity != 1 {
                 context.opacity /= opacity
             }
@@ -186,22 +177,46 @@ enum SVGSceneRenderer {
         )
     }
 
+    private static func drawTSpanTextBlock(
+        _ block: SVGTextBlock,
+        tspans: [SVGTSpanNode],
+        context: inout GraphicsContext
+    ) {
+        let fontSize = max(block.fontSize ?? 14, 1)
+        let weightValue = block.fontWeightValue ?? 400
+        let weight = fontWeight(from: weightValue)
+        let blockFill = block.style.fill
+
+        var attributed = AttributedString()
+        for span in tspans {
+            let content = span.text.replacingOccurrences(of: "\n", with: " ")
+            guard !content.isEmpty else { continue }
+            var segment = AttributedString(content)
+            segment.font = .system(size: fontSize, weight: weight)
+            let fill = SVGPaintResolver.fillColor(span.style.fill)
+                ?? SVGPaintResolver.fillColor(blockFill)
+                ?? .primary
+            segment.foregroundColor = fill
+            attributed.append(segment)
+        }
+
+        guard !attributed.characters.isEmpty else { return }
+        context.draw(Text(attributed), at: .zero, anchor: .topLeading)
+    }
+
+    private static func fontWeight(from value: CGFloat) -> Font.Weight {
+        if value >= 700 { return .bold }
+        if value >= 600 { return .semibold }
+        if value >= 500 { return .medium }
+        return .regular
+    }
+
     private static func drawPlainTextBlock(_ block: SVGTextBlock, context: inout GraphicsContext) {
         let fill = SVGPaintResolver.fillColor(block.style.fill) ?? .primary
         let resolved = block.plainText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !resolved.isEmpty else { return }
         let size = max(block.fontSize ?? 14, 1)
-        let weightValue = block.fontWeightValue ?? 400
-        let weight: Font.Weight
-        if weightValue >= 700 {
-            weight = .bold
-        } else if weightValue >= 600 {
-            weight = .semibold
-        } else if weightValue >= 500 {
-            weight = .medium
-        } else {
-            weight = .regular
-        }
+        let weight = fontWeight(from: block.fontWeightValue ?? 400)
         context.draw(
             Text(resolved).font(.system(size: size, weight: weight)).foregroundStyle(fill),
             at: .zero,

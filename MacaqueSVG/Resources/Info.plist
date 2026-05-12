@@ -2,6 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BuildFailureCount</key>
+	<string>2026.05.003</string>
+	<key>BuildFailureCountLifetime</key>
+	<string>3</string>
+	<key>BuildFailureCountYear</key>
+	<string>2026.003</string>
+	<key>BuildSuccessCount</key>
+	<string>2026.05.092</string>
+	<key>BuildSuccessCountLifetime</key>
+	<string>92</string>
+	<key>BuildSuccessCountYear</key>
+	<string>2026.092</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDocumentTypes</key>
@@ -35,7 +47,7 @@
 			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.vivek.macaque.svgz-image</string>
+				<string>club.cycleruncode.macaque.svgz-image</string>
 			</array>
 		</dict>
 	</array>
@@ -50,9 +62,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
+	<string>2026.05.12-13</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>2026.05.12-13</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
@@ -89,7 +101,7 @@
 			<key>UTTypeDescription</key>
 			<string>Compressed Scalable Vector Graphics (gzip)</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.vivek.macaque.svgz-image</string>
+			<string>club.cycleruncode.macaque.svgz-image</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
