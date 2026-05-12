@@ -9,6 +9,7 @@ protocol SVGNode: AnyObject, Identifiable {
     var transform: CGAffineTransform { get set }
     var style: SVGStyle { get set }
     var parent: SVGGroup? { get }
+    var isVisible: Bool { get set }
 }
 
 class SVGElement: SVGNode {
@@ -18,6 +19,7 @@ class SVGElement: SVGNode {
     var transform: CGAffineTransform
     var style: SVGStyle
     weak var parent: SVGGroup?
+    var isVisible: Bool = true
 
     init(
         svgId: String? = nil,

@@ -9,11 +9,11 @@
 	<key>BuildFailureCountYear</key>
 	<string>2026.003</string>
 	<key>BuildSuccessCount</key>
-	<string>2026.05.092</string>
+	<string>2026.05.096</string>
 	<key>BuildSuccessCountLifetime</key>
-	<string>92</string>
+	<string>96</string>
 	<key>BuildSuccessCountYear</key>
-	<string>2026.092</string>
+	<string>2026.096</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDocumentTypes</key>
@@ -62,9 +62,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2026.05.12-13</string>
+	<string>2026.05.12-17</string>
 	<key>CFBundleVersion</key>
-	<string>2026.05.12-13</string>
+	<string>2026.05.12-17</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>

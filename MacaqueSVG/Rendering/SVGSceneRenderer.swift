@@ -51,6 +51,8 @@ enum SVGSceneRenderer {
         useDepth: Int,
         renderDefinitionSubtrees: Bool
     ) {
+        guard element.isVisible else { return }
+
         if element is SVGDefinitionContainer, !renderDefinitionSubtrees {
             return
         }

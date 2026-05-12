@@ -8,6 +8,8 @@ struct SVGPreviewView: View {
     var showsTransparencyGrid: Bool = true
     var useBrowserSVGRendering: Bool = true
     @Binding var selectedElement: SVGElement?
+    var activeTool: EditorTool = .select
+    @Binding var revisionCounter: Int
 
     @State private var zoomScale: CGFloat = 1.0
     @State private var panOffset: CGSize = .zero
@@ -26,12 +28,16 @@ struct SVGPreviewView: View {
         document: SVGDocument,
         showsTransparencyGrid: Bool = true,
         useBrowserSVGRendering: Bool = true,
-        selectedElement: Binding<SVGElement?> = .constant(nil)
+        selectedElement: Binding<SVGElement?> = .constant(nil),
+        activeTool: EditorTool = .select,
+        revisionCounter: Binding<Int> = .constant(0)
     ) {
         self.document = document
         self.showsTransparencyGrid = showsTransparencyGrid
         self.useBrowserSVGRendering = useBrowserSVGRendering
         _selectedElement = selectedElement
+        self.activeTool = activeTool
+        _revisionCounter = revisionCounter
     }
 
     var body: some View {
@@ -163,11 +169,18 @@ struct SVGPreviewView: View {
     private var panGesture: some Gesture {
         DragGesture(minimumDistance: 5)
             .updating($liveDrag) { value, state, _ in
-                state = value.translation
+                if activeTool == .select || selectedElement == nil {
+                    state = value.translation
+                }
             }
             .onEnded { value in
-                panOffset.width += value.translation.width
-                panOffset.height += value.translation.height
+                EditorTool.handleDrag(
+                    tool: activeTool,
+                    dragTranslation: value.translation,
+                    selectedElement: selectedElement,
+                    panOffset: &panOffset,
+                    revisionCounter: &revisionCounter
+                )
             }
     }
 

@@ -22,6 +22,23 @@ To set up the project locally:
 2. Run `xcodegen` in the root directory.
 3. Open the newly generated `MacaqueSVG.xcodeproj` in Xcode.
 
-## Phase 1 Objectives
-* Define the `SVGNode` protocol and base shape primitives.
-* Implement a basic XML Parser to convert `.svg` strings into our Swift DOM.
+## Implementation Phases
+
+### Phase 1: Core Data Model & Parsing (Complete)
+* `SVGNode` protocol and 15+ concrete element types (rect, circle, path, group, text, image, etc.)
+* XML parser with CSS stylesheet, inline styles, gradient definitions, and mask/clip-path support
+
+### Phase 2: Native Rendering Engine (Complete)
+* `SVGSceneRenderer` with fill, stroke, gradients, opacity, transforms, and embedded images
+* WebKit-based preview for pixel-perfect rendering including `<textPath>` and CSS
+
+### Phase 3: Interactive Canvas (Complete)
+* Pan (drag), zoom (trackpad pinch, Cmd+/Cmd-), and hit-testing
+* Selection overlay with bounding box and resize handles
+* Coordinate mapping between screen space and SVG document space
+
+### Phase 4: Editor Tools & UI (Complete)
+* **Properties Inspector** with live-editing of geometry, style, and transform properties
+* **Layer List** with hierarchical DOM tree, visibility toggles, and selection sync
+* **Tool Architecture** with Select (V) and Move (M) tools
+* Element visibility system integrated with renderer and hit-tester

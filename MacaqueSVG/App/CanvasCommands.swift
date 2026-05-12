@@ -10,10 +10,16 @@ extension Notification.Name {
 final class CanvasActions: ObservableObject {
     @Binding var useCanvasMode: Bool
     @Binding var selectedElement: SVGElement?
+    @Binding var activeTool: EditorTool
 
-    init(useCanvasMode: Binding<Bool>, selectedElement: Binding<SVGElement?>) {
+    init(
+        useCanvasMode: Binding<Bool>,
+        selectedElement: Binding<SVGElement?>,
+        activeTool: Binding<EditorTool> = .constant(.select)
+    ) {
         _useCanvasMode = useCanvasMode
         _selectedElement = selectedElement
+        _activeTool = activeTool
     }
 
     func resetViewport() {
@@ -66,6 +72,22 @@ struct CanvasCommands: Commands {
                 actions?.resetViewport()
             }
             .keyboardShortcut("0", modifiers: .command)
+
+            if actions?.useCanvasMode == true {
+                Divider()
+
+                Button("Select Tool") {
+                    actions?.activeTool = .select
+                }
+                .keyboardShortcut("v", modifiers: [])
+                .disabled(actions?.activeTool == .select)
+
+                Button("Move Tool") {
+                    actions?.activeTool = .move
+                }
+                .keyboardShortcut("m", modifiers: [])
+                .disabled(actions?.activeTool == .move)
+            }
         }
     }
 }
